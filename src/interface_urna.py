@@ -129,7 +129,12 @@ class UrnaEletronica:
                 self.clear_window()
                 self.iniciar_titulo()
             else:
-                messagebox.showinfo("Atenção", f"Número de candidato invalido: {self.voto}")
+                self.voto = "NULO"
+                self.urna.registrar_voto(self.eleitor, self.voto)
+                messagebox.showinfo("Voto Confirmado", f"Candidato Inexistente, voto computado como {self.voto}")
+                self.display_vote_titulo.delete(0, tk.END)
+                self.clear_window()
+                self.iniciar_titulo()
         else:
             messagebox.showwarning("Atenção", "Nenhum voto registrado.")
         
