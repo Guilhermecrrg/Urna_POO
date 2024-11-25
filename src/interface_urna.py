@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 from common import *
-from eleicao import Urna, Pessoa 
+from eleicao import Urna, Pessoa
 import pickle
 
 
@@ -15,7 +15,7 @@ class UrnaEletronicaApp:
         self.criar_interface_inicial()
 
     def criar_interface_inicial(self):
-        self.limpar_tela() 
+        self.limpar_tela()
 
         self.titulo_label = tk.Label(self.root, text="Digite o número do título de eleitor:")
         self.titulo_label.pack()
@@ -29,23 +29,33 @@ class UrnaEletronicaApp:
     def criar_interface_votacao(self, eleitor):
         self.limpar_tela()
 
+        # Exibe as informações do eleitor
         self.info_label = tk.Label(self.root, text=f"Eleitor: {eleitor.get_nome()}")
         self.info_label.pack()
 
+        # Linha de traços
+        self.info_label_2 = tk.Label(self.root, text="------------------------")
+        self.info_label_2.pack()
+
+        # Exibe a lista de candidatos (sem botões, apenas lista simples)
+        for numero, nome in self.urna.get_candidatos():
+            candidato_label = tk.Label(self.root, text=f"{numero} - {nome}")
+            candidato_label.pack()
+
+        # Linha de traços após a lista de candidatos
+        self.info_label_3 = tk.Label(self.root, text="------------------------")
+        self.info_label_3.pack()
+
+        # Texto para orientação, exibido como label
+        self.texto_orientacao = tk.Label(self.root, text="Digite o número do candidato:")
+        self.texto_orientacao.pack()
+
+        # Campo vazio para digitar o número do candidato
         self.voto_entry = tk.Entry(self.root)
         self.voto_entry.pack()
-        self.voto_entry.insert(0, "Digite o número do candidato")
 
-        candidatos_label = tk.Label(self.root, text="Candidatos disponíveis:")
-        candidatos_label.pack()
-
-        for numero, nome in self.urna.get_candidatos():
-            candidato_button = tk.Button(self.root, text=f"{numero} - {nome}", 
-                                        command=lambda num=numero: self.voto_entry.delete(0, tk.END) or self.voto_entry.insert(0, num))
-            candidato_button.pack()
-
-        self.votar_button = tk.Button(self.root, text="Votar", 
-                                    command=lambda: self.registrar_voto(eleitor))
+        # Botão para registrar o voto
+        self.votar_button = tk.Button(self.root, text="Votar", command=lambda: self.registrar_voto(eleitor))
         self.votar_button.pack()
 
     def verificar_eleitor(self):
@@ -68,6 +78,7 @@ class UrnaEletronicaApp:
                 self.urna.registrar_voto(eleitor, numero_votado)
                 messagebox.showinfo("Sucesso", "Voto registrado com sucesso!")
 
+                # Limpa a tela e volta para a interface inicial
                 self.limpar_tela()
                 self.criar_interface_inicial()
             else:
