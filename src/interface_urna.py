@@ -4,138 +4,132 @@ from common import *
 from eleicao import *
 import csv
 
-class UrnaEletronicaApp:
-    def __init__(self, root, urna):
-        self.root = root
+class UrnaEletronica:
+    def __init__(self, master, urna):
+        self.master = master
+        self.master.config(bg="gray")
+        self.master.title("Urna Eletrônica")
+        self.master.geometry("450x450")
+
         self.urna = urna
-        self.info_label = None
-        self.voto_entry = None
+        self.voto = ""
+        self.eleitor = None  # Variável para armazenar o eleitor
 
-        self.criar_interface_inicial()
+        self.titulo_entry = None
+        self.display_voto = None
+        
+        self.iniciar_titulo()
 
-    def criar_interface_inicial(self):
-        self.limpar_tela()
+    def iniciar_titulo(self):
+        self.clear_window()
 
-        self.titulo_label = tk.Label(self.root, text="Digite seu título de eleitor:")
-        self.titulo_label.pack()
+        titulo_label = tk.Label(self.master, text="Informe o Título de Eleitor", font=('Arial', 18), bg="gray", fg="white")
+        titulo_label.grid(row=0, column=0, columnspan=4, padx=20, pady=20)
 
-        self.titulo_entry = tk.Entry(self.root)
-        self.titulo_entry.pack()
+        self.titulo_entry = tk.Entry(self.master, font=('Arial', 24), justify='center')
+        self.titulo_entry.grid(row=1, column=0, columnspan=4, padx=20, pady=20)
 
-        self.verificar_button = tk.Button(self.root, text="Verificar Eleitor", command=self.verificar_eleitor)
-        self.verificar_button.pack()
+        # Botão para validar o título de eleitor
+        botao_validar = tk.Button(self.master, text="Validar", command=self.validar_titulo, font=('Arial', 18))
+        botao_validar.grid(row=2, column=0, columnspan=4, padx=20, pady=20)
 
-    def limpar_tela(self):
-        for widget in self.root.winfo_children():
+    def validar_titulo(self):
+        try:
+            numero_titulo = self.titulo_entry.get()
+            self.eleitor = self.urna.get_eleitor(int(numero_titulo))
+            if self.eleitor:
+                if self.urna.eleitor_ja_votou(self.eleitor):
+                    messagebox.showinfo("Eleitor Encontrado", f"Eleitor: {numero_titulo} encontrado!")
+                    self.titulo_entry.delete(0, tk.END)
+                    self.adicionar_botoes()
+                else:
+                    messagebox.showwarning("Erro", "Eleitor já votou.")
+            else:
+                messagebox.showwarning("Erro", "Eleitor não encontrado.")
+        except ValueError:
+            messagebox.showwarning("Erro", "Número de título inválido.")
+
+    def adicionar_botoes(self):
+        self.clear_window()  # Limpar a tela do título de eleitor
+
+        # Exibir os botões de votação
+        self.display_voto = tk.Entry(self.master, font=('Arial', 24), justify='center')
+        self.display_voto.grid(row=0, column=0, columnspan=4, padx=10, pady=10)
+
+        frame_b = tk.Frame(self.master, padx=20, pady=20, bg="gray")
+        frame_b.grid(row=1, column=1)
+
+        botao_button_config = {
+            'font': ('Arial', 18),
+            'relief': "solid",
+            'borderwidth': 0,
+            'highlightthickness': 0
+        }
+
+        botao_grid_config = {
+            'padx': 5,
+            'pady': 5,
+            'ipadx': 20,
+            'ipady': 20,
+            'sticky': "ewsn"
+        }
+
+        botao_button_nums = {
+            **botao_button_config,
+            **{ 'bg': "black", 
+                'fg': "white", 
+                'anchor': "nw" }
+        }
+
+        ## Numeros
+        for i in range(3):
+            for j in range(3):
+                numero = 1 + i * 3 + j
+                botao = tk.Button(frame_b, text=str(numero), command=lambda n=numero: self.adicionar_voto(n), **botao_button_nums)
+                botao.grid(row=i + 1, column=j, **botao_grid_config)
+        botao_zero = tk.Button(frame_b, text='0', command=lambda: self.adicionar_voto(0), **botao_button_nums)
+        botao_zero.grid(row=4, column=1, **botao_grid_config)
+
+        ## Botões de ação
+        botao_em_branco = tk.Button(frame_b, text='Em Branco', command=self.voto_em_branco, **botao_button_config, bg="white", fg="black")
+        botao_em_branco.grid(row=1, column=4, **botao_grid_config,  rowspan=1)
+
+        botao_corrigir = tk.Button(frame_b, text='Corrigir', command=self.corrigir_voto, **botao_button_config, bg="red", fg="black")
+        botao_corrigir.grid(row=2, column=4, **botao_grid_config,  rowspan=1)
+
+        botao_confirmar = tk.Button(frame_b, text='Confirmar', command=self.confirmar_voto, **botao_button_config, bg="green", fg="black")
+        botao_confirmar.grid(row=3, column=4, **botao_grid_config, rowspan=2)
+
+    def clear_window(self):
+        self.corrigir_voto() 
+        for widget in self.master.winfo_children():
             widget.destroy()
 
-    def registrar_voto(self, eleitor, numero_do_candidato):
-        if numero_do_candidato.strip() == "":
-            voto = "branco"
+    def adicionar_voto(self, numero):
+        self.voto += str(numero)
+        self.display_voto.delete(0, tk.END)
+        self.display_voto.insert(0, self.voto)
+
+    def confirmar_voto(self):
+        if self.voto:
+            self.urna.registrar_voto(self.eleitor, self.voto)
+            messagebox.showinfo("Voto Confirmado", f"Você votou no candidato número: {self.voto}")
+            self.display_voto.delete(0, tk.END)
+            self.clear_window()
+            self.iniciar_titulo()
         else:
-            candidato_valido = next((c for c in self.urna.get_candidatos() if c.get_numero() == int(numero_do_candidato)), None)
-            if candidato_valido:
-                voto = candidato_valido.get_numero()
-            else:
-                self.exibir_erro("Número do candidato inválido. Voto não registrado.")
-                return
+            messagebox.showwarning("Atenção", "Nenhum voto registrado.")
+        
 
-        self.urna.registrar_voto(eleitor, voto)
-        self.gravar_voto_csv(eleitor.get_titulo(), voto)
-        print(f"Voto registrado para: {voto}")
-        self.limpar_tela()
-        self.criar_interface_inicial()
+    def voto_em_branco(self):
+        self.voto = "BRANCO"
+        self.urna.registrar_voto(self.eleitor, self.voto)
+        messagebox.showinfo("Voto Confirmado", "Você votou em branco")
+        self.display_voto.delete(0, tk.END)
+        self.clear_window()
+        self.iniciar_titulo()
 
-    def gravar_voto_csv(self, eleitor_id, voto):
-        try:
-            with open("votos.csv", "a", newline='') as f:
-                writer = csv.writer(f)
-                writer.writerow([eleitor_id, voto])
-            print("Voto salvo com sucesso em CSV.")
-        except Exception as e:
-            print(f"Erro ao salvar voto: {e}")
-            self.exibir_erro("Erro ao salvar voto.")
-
-    def criar_interface_votacao(self, eleitor):
-        self.limpar_tela()
-
-        self.info_label = tk.Label(self.root, text=str(eleitor))
-        self.info_label.pack()
-
-        self.separador = tk.Label(self.root, text="-" * 50)
-        self.separador.pack()
-
-        self.candidatos_label = tk.Label(self.root, text="Candidatos Disponíveis:")
-        self.candidatos_label.pack()
-
-        for candidato in self.urna.get_candidatos():
-            candidato_info = f"{candidato.get_numero()}: {candidato.get_nome()}"
-            tk.Label(self.root, text=candidato_info).pack()
-
-        self.instrucao_label = tk.Label(self.root, text="Para votar em branco, deixe o campo vazio e confirme.")
-        self.instrucao_label.pack()
-
-        self.voto_label = tk.Label(self.root, text="Digite o número do candidato:")
-        self.voto_label.pack()
-
-        self.voto_entry = tk.Entry(self.root)
-        self.voto_entry.pack()
-
-        self.votar_button = tk.Button(self.root, text="Votar", command=lambda: self.registrar_voto(eleitor, self.voto_entry.get()))
-        self.votar_button.pack()
-
-    def verificar_eleitor(self):
-        try:
-            titulo = int(self.titulo_entry.get())
-            eleitor = self.urna.get_eleitor(titulo)
-            if eleitor:
-                self.criar_interface_votacao(eleitor)
-            else:
-                self.exibir_erro("Eleitor não encontrado nesta urna")
-        except ValueError:
-            self.exibir_erro("Título inválido")
-
-    def exibir_erro(self, mensagem):
-        messagebox.showerror("Erro", mensagem)
-
-def carregar_dados():
-    eleitores = []
-    candidatos = []
-
-    try:
-        with open("eleitores.csv", "r") as file:
-            reader = csv.reader(file)
-            next(reader)
-            for row in reader:
-                if len(row) == 6:
-                    nome = row[0]
-                    rg = row[1]
-                    cpf = row[2]
-                    titulo = int(row[3])  
-                    secao = int(row[4]) 
-                    zona = int(row[5])
-                    print(f"Nome: {nome}, RG: {rg}, CPF: {cpf}, Título: {titulo}, Seção: {secao}, Zona: {zona}")
-                    eleitores.append(Eleitor(nome, rg, cpf, titulo, secao, zona)) 
-                else:
-                    print(f"Formato de dados inválido para o eleitor: {row}")
-    except FileNotFoundError:
-        print("Arquivo de eleitores não encontrado.")
-
-    try:
-        with open("candidatos.csv", "r") as file:
-            reader = csv.reader(file)
-            next(reader)
-            for row in reader:
-                if len(row) == 4:
-                    nome = row[0]
-                    rg = row[1]
-                    cpf = row[2]
-                    numero = int(row[3])
-                    print(f"Nome: {nome}, RG: {rg}, CPF: {cpf}, Número: {numero}")
-                    candidatos.append(Candidato(nome, rg, cpf, numero)) 
-                else:
-                    print(f"Formato de dados inválido para o candidato: {row}")
-    except FileNotFoundError:
-        print("Arquivo de candidatos não encontrado.")
-
-    return eleitores, candidatos
+    def corrigir_voto(self):
+        self.voto = ""
+        if(self.display_voto):
+            self.display_voto.delete(0, tk.END)
