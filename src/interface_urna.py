@@ -39,9 +39,11 @@ class UrnaEletronicaApp:
             candidato_label = tk.Label(self.root, text=f"{numero} - {nome}")
             candidato_label.pack()
 
+        self.voto_label = tk.Label(self.root, text="Digite o número do candidato:")
+        self.voto_label.pack()
+
         self.voto_entry = tk.Entry(self.root)
         self.voto_entry.pack()
-        self.voto_entry.insert(0, "Digite o número do candidato")
 
         self.votar_button = tk.Button(self.root, text="Votar", command=self.registrar_voto)
         self.votar_button.pack()
