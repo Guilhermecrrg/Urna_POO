@@ -29,10 +29,11 @@ class Urna:
             return False
 
     def validar_voto(self, voto):
-        if voto in self.candidatos:
-            return True
-        elif voto == "BRANCO":
-            return True
+        for candidato in self.get_candidatos():
+            if int(voto) == candidato.get_numero():
+                return True
+            elif voto == "BRANCO":
+                return True
         return False
 
     def gravar_dados_csv(self):

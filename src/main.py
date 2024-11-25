@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
   mesario = Pessoa("Mesario Exemplo", "123456789", "123.456.789-00")
   urna = Urna(mesario, secao=1, zona=101, candidatos=candidatos, eleitores=eleitores)
-
+  print(urna.get_candidatos())
   root = tk.Tk()
   app = UrnaEletronica(root, urna)
   root.mainloop()
