@@ -13,18 +13,27 @@ class Urna:
 
 
     def eleitor_ja_votou(self, eleitor):
+        print(self.votos)
+        eleitor_id = eleitor.get_titulo()
         if eleitor_id not in self.votos:
             return True
         return False
 
     def registrar_voto(self, eleitor, voto):
         eleitor_id = eleitor.get_titulo()
-        if self.eleitor_ja_votou(eleitor_id):
+        if self.eleitor_ja_votou(eleitor):
             self.votos[eleitor_id] = voto
             self.gravar_dados_csv()
             return True
         else:
             return False
+
+    def validar_voto(self, voto):
+        if voto in self.candidatos:
+            return True
+        elif voto == "BRANCO":
+            return True
+        return False
 
     def gravar_dados_csv(self):
         with open("votos.csv", "w", newline='') as f:
