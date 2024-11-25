@@ -15,9 +15,9 @@ class UrnaEletronicaApp:
         self.criar_interface_inicial()
 
     def criar_interface_inicial(self):
-        self.limpar_tela()
+        self.limpar_tela() 
 
-        self.titulo_label = tk.Label(self.root, text="Digite o título do eleitor:")
+        self.titulo_label = tk.Label(self.root, text="Digite o número do título de eleitor:")
         self.titulo_label.pack()
 
         self.titulo_entry = tk.Entry(self.root)
@@ -29,23 +29,23 @@ class UrnaEletronicaApp:
     def criar_interface_votacao(self, eleitor):
         self.limpar_tela()
 
-        self.info_label = tk.Label(self.root, text=f"Eleitor: {eleitor.get_nome() if hasattr(eleitor, 'get_nome') else eleitor.nome}")
+        self.info_label = tk.Label(self.root, text=f"Eleitor: {eleitor.get_nome()}")
         self.info_label.pack()
-
-        self.candidatos_label = tk.Label(self.root, text="Candidatos:")
-        self.candidatos_label.pack()
-
-        for numero, nome in self.urna.get_candidatos():
-            candidato_label = tk.Label(self.root, text=f"{numero} - {nome}")
-            candidato_label.pack()
-
-        self.voto_label = tk.Label(self.root, text="Digite o número do candidato:")
-        self.voto_label.pack()
 
         self.voto_entry = tk.Entry(self.root)
         self.voto_entry.pack()
+        self.voto_entry.insert(0, "Digite o número do candidato")
 
-        self.votar_button = tk.Button(self.root, text="Votar", command=self.registrar_voto)
+        candidatos_label = tk.Label(self.root, text="Candidatos disponíveis:")
+        candidatos_label.pack()
+
+        for numero, nome in self.urna.get_candidatos():
+            candidato_button = tk.Button(self.root, text=f"{numero} - {nome}", 
+                                        command=lambda num=numero: self.voto_entry.delete(0, tk.END) or self.voto_entry.insert(0, num))
+            candidato_button.pack()
+
+        self.votar_button = tk.Button(self.root, text="Votar", 
+                                    command=lambda: self.registrar_voto(eleitor))
         self.votar_button.pack()
 
     def verificar_eleitor(self):
@@ -62,14 +62,16 @@ class UrnaEletronicaApp:
 
     def registrar_voto(self, eleitor):
         try:
-            n_candidato = int(self.voto_entry.get())
-
-            if eleitor:
-                self.urna.registrar_voto(eleitor, n_candidato)
+            numero_votado = self.voto_entry.get()
+            if numero_votado.isdigit():
+                numero_votado = int(numero_votado)
+                self.urna.registrar_voto(eleitor, numero_votado)
                 messagebox.showinfo("Sucesso", "Voto registrado com sucesso!")
+
+                self.limpar_tela()
                 self.criar_interface_inicial()
             else:
-                self.exibir_erro("Eleitor não encontrado.")
+                self.exibir_erro("Número de candidato inválido.")
         except ValueError:
             self.exibir_erro("Número de candidato inválido.")
 
